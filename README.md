@@ -16,8 +16,8 @@ rather than smoothed over. Appendix E lists what was observed but not confirmed 
 what was not attempted at all. Procedures are omitted for federal security track. 
 Some findings are also omitted for the same.
 
-Expect this to change. Findings may be revised, sharpened, or withdrawn as more is
-learned, and any correction will be made in place with the original left visible.
+This is a maintained record. Where new evidence changes a finding, the finding is
+updated in place and the paper remains the authoritative version.
 
 If something here is wrong, the useful thing is to say so.
 
