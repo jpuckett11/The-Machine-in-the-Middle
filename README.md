@@ -8,13 +8,15 @@ Version 1.0, published 2026-09-01
 
 ---
 
-## This is a work in progress
+## Scope, and what is deliberately not here
 
-Published while the work is still open, deliberately. Several threads are
-live and several questions are unresolved, and they are marked as such throughout
-rather than smoothed over. Appendix E lists what was observed but not confirmed and
-what was not attempted at all. Procedures are omitted for federal security track. 
-Some findings are also omitted for the same.
+Some threads remain open and some questions are unresolved. Both are marked as such
+throughout rather than smoothed over: Appendix E lists what was observed but not
+confirmed, and what was not attempted at all.
+
+**Reproduction procedures are withheld**, and some findings with them, because the
+affected hardware is in public use and the material is on a federal disclosure
+track. That omission is deliberate and is not an oversight.
 
 This is a maintained record. Where new evidence changes a finding, the finding is
 updated in place and the paper remains the authoritative version.
