@@ -66,11 +66,16 @@ The instrument is credited even though its output is not, because it earned the
 credit either way. Some of the most consequential work an instrument does is work
 nobody gets to see.
 
-**Valley Tech Custom Solutions** belongs here for a different reason. Kal did not
-send an instrument. He kept faith with independent developers while a coordinated
-campaign was running against him, and went on crediting the people being accused
-alongside him rather than distancing himself to make it stop. Character under
-pressure is worth more to this field than a discount, and it is rarer.
+**Valley Tech Custom Solutions** modified boards for this bench and assembled a unit
+I had bought and had no time to build. Kal did the work himself so the bench was
+ready when it needed to be. That is not a favour anyone owed an independent
+researcher.
+
+He belongs here twice over. While a coordinated campaign was running against him he
+kept faith with the other independent developers, and went on crediting the people
+being accused alongside him rather than distancing himself to make it stop.
+Character under pressure is worth more to this field than a discount, and it is
+rarer.
 
 A great deal of security research never happens because the instrumentation is out
 of reach. These three are a direct answer to that, and this paper is one of the
