@@ -66,11 +66,22 @@ The instrument is credited even though its output is not, because it earned the
 credit either way. Some of the most consequential work an instrument does is work
 nobody gets to see.
 
-A great deal of security research never happens because the instrumentation is out
-of reach. Jesse and the HaleHound team, and Saleae, are a direct answer to that.
-This paper is one of the things that exists because they made the tools available.
+**Valley Tech Custom Solutions** belongs here for a different reason. Kal did not
+send an instrument. He kept faith with independent developers while a coordinated
+campaign was running against him, and went on crediting the people being accused
+alongside him rather than distancing himself to make it stop. Character under
+pressure is worth more to this field than a discount, and it is rarer.
 
-Thank you, both of you.
+A great deal of security research never happens because the instrumentation is out
+of reach. These three are a direct answer to that, and this paper is one of the
+things that exists because of it.
+
+**That is the whole list.** Not a selection from a longer one. Three small companies
+decided that somebody working alone, with no employer and no lab budget, was worth
+backing before he had anything to offer them. Every one of these relationships began
+with credit given, not with a request made.
+
+Thank you, all three of you.
 
 ---
 
