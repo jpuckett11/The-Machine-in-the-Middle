@@ -53,8 +53,8 @@ reach of a one-person practice. Their instruments are not the cheap option, and 
 company chose to make them reachable anyway for somebody doing this work without an
 employer behind him.
 
-Their instrument was used in work that is not published here. It is credited even
-though its output is not, because it earned the credit either way.
+Their analyzer did bus-level work that is not published here, and will not be. It is
+credited even though its output is not, because it earned the credit either way.
 
 A great deal of security research never happens because the instrumentation is out
 of reach. Jesse and the HaleHound team, and Saleae, are a direct answer to that.
