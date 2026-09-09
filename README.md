@@ -53,8 +53,18 @@ reach of a one-person practice. Their instruments are not the cheap option, and 
 company chose to make them reachable anyway for somebody doing this work without an
 employer behind him.
 
-Their analyzer did bus-level work that is not published here, and will not be. It is
-credited even though its output is not, because it earned the credit either way.
+Their analyzer did bus-level work that is not published here, and will not be.
+
+That is not modesty and it is not a teaser. It is withheld because of what it is.
+The hardware is in public use, there is no patch, and the vehicles are on the road
+today. Publishing the method would hand it to anyone who wanted it, against people
+who never agreed to be part of anyone's research and who cannot fix it themselves.
+The capability is stated so regulators can act. The procedure stays with the
+agencies, and the omission is permanent.
+
+The instrument is credited even though its output is not, because it earned the
+credit either way. Some of the most consequential work an instrument does is work
+nobody gets to see.
 
 A great deal of security research never happens because the instrumentation is out
 of reach. Jesse and the HaleHound team, and Saleae, are a direct answer to that.
