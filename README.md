@@ -49,7 +49,7 @@ somebody without a lab budget can actually own one, and supported by people who
 answer when you ask a question.
 
 **Saleae** extended a researcher discount that put precision logic analysis within
-reach of a one-person practice. Their instruments are not the cheap option, and the
+reach of a one person practice. Their instruments are not the cheap option, and the
 company chose to make them reachable anyway for somebody doing this work without an
 employer behind him.
 
