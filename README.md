@@ -48,11 +48,16 @@ independent researcher. Purpose-built RF and wireless survey tools, priced so th
 somebody without a lab budget can actually own one, and supported by people who
 answer when you ask a question.
 
-A great deal of security research never happens because the instrumentation is out
-of reach. Jesse and the HaleHound team are a direct answer to that, and this paper
-is one of the things that exists because they made the tools available.
+**Saleae** extended a researcher discount that put precision logic analysis within
+reach of a one-person practice. Their instruments are not the cheap option, and the
+company chose to make them reachable anyway for somebody doing this work without an
+employer behind him.
 
-Thank you.
+A great deal of security research never happens because the instrumentation is out
+of reach. Jesse and the HaleHound team, and Saleae, are a direct answer to that.
+This paper is one of the things that exists because they made the tools available.
+
+Thank you, both of you.
 
 ---
 
