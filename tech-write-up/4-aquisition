@@ -1,0 +1,25 @@
+3. Forensic Acquisition
+
+Firmware was acquired using Qualcomm Emergency Download Mode rather than by compromising the running operating system.
+
+The device enumerated as Qualcomm EDL hardware and exposed the Sahara/Firehose acquisition interface.
+
+The acquisition process disclosed:
+
+Qualcomm SDM662 hardware;
+Samsung UFS storage;
+a generic Qualcomm platform identity;
+a publicly identifiable Firehose program;
+and write primitives including program, patch, erase, firmwarewrite, and fixgpt.
+
+The investigation used the interface for acquisition only.
+
+The presence of write primitives is nevertheless important because it establishes that the same physical-access mechanism capable of reading the firmware also exposes mechanisms capable of modifying storage.
+
+The complete acquisition was performed through multiple sessions because the Firehose connection did not remain stable for a single uninterrupted dump.
+
+Approximately 31 GB of firmware and partition data was acquired across 12 EDL sessions.
+
+The resulting material included approximately 115 partition images, followed by additional extraction and analysis.
+
+Cryptographic hashes were generated for the evidence material and retained as part of the case record.
