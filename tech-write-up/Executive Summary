@@ -1,0 +1,50 @@
+The Machine in the Middle
+Firmware Security, Trust Boundaries, and Supply-Chain Architecture in an Aftermarket Android Automotive Accessory
+
+Jay Puckett (Reckoner)
+Principal Security Researcher
+Obsidian Watch Group
+
+Research period: May–September 2026
+Publication version: 1.0
+
+Executive Summary
+
+This report documents a forensic security examination of a commercially available aftermarket automotive accessory sold as a wireless Android Auto and Apple CarPlay adapter.
+
+The device was purchased at retail with the researcher's own funds and examined using independently controlled hardware and instrumentation. The examination did not require unauthorized access to a vendor network, production server, customer account, or third-party computer system.
+
+The investigation began with a straightforward question: what security boundary exists between the owner, the vehicle, the smartphone, and the software running inside an accessory that sits directly between them?
+
+The resulting evidence indicates that, on the examined device, that boundary is substantially weaker than a consumer would reasonably expect.
+
+The device is not merely a passive adapter. It terminates communications from a smartphone and presents itself to the vehicle's head unit as an intermediary. In doing so, it occupies a privileged position in the flow of navigation information, audio, notifications, contacts, calls, and other projected information. Its Bluetooth functions additionally provide access to phone data through the Message Access Profile.
+
+The firmware examination identified multiple independent mechanisms affecting the device's security posture, including:
+
+Qualcomm reference-platform firmware and incomplete OEM identity provisioning.
+A platform signing configuration involving published Android Open Source Project test keys.
+An OTA verification key corresponding to a published AOSP test key.
+A production Android Automotive/Android Auto-related credential and corresponding private key stored locally on the device.
+A trust anchor retrieved over cleartext HTTP and authenticated through an application-level MD5 comparison.
+A writable trust-anchor location outside the Verified Boot protected area.
+Multiple factory installation and debugging mechanisms.
+Hardcoded factory access codes embedded in shipped software.
+A mechanism for enabling wireless ADB.
+A mechanism for installing APKs through the factory interface.
+A persistent vendor keepalive mechanism capable of restarting designated services.
+Applications with access to location, microphone, messaging, cellular, and vehicle-related functionality.
+Evidence that the firmware is derived from a broader reference design rather than being unique to the retail brand printed on the box.
+Evidence of substantially shared architecture across multiple firmware samples and manufacturers.
+
+The investigation also identified a significant distinction between individual vulnerabilities and architectural insecurity.
+
+Several findings do not depend upon discovering an exploitable programming error. They arise because the vendor deliberately configured security controls in a manner that permits privileged access, installation, debugging, persistence, or credential management through mechanisms shipped as part of the product.
+
+That distinction is central to this research.
+
+The report therefore does not characterize the device simply as "vulnerable." It documents a reference architecture in which multiple security boundaries can be bypassed or rendered ineffective through supported or factory mechanisms, while the consumer has comparatively little ability to control or revoke those capabilities.
+
+The findings were preserved through forensic acquisition, cryptographic hashing, source comparison, static analysis, compiled-policy analysis, and repeated examination. Where an apparent vulnerability was investigated but could not be demonstrated under the shipped configuration, it is explicitly recorded as an observation rather than promoted to a vulnerability.
+
+That distinction is intentional.
