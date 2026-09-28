@@ -1,0 +1,22 @@
+1. Scope of the Investigation
+
+The subject of this investigation was an aftermarket automotive Android accessory purchased through normal retail channels.
+
+The device examined was:
+
+Property	Observed value
+Device class	Wireless Android Auto / Apple CarPlay adapter
+SoC	Qualcomm SDM662
+Storage	Samsung UFS
+Operating system	Android 13 system / Android 11 vendor
+Reported security patch	2023-06-05
+Build date	2025-09-28
+Acquisition	Retail purchase
+Firmware acquisition	Qualcomm EDL
+Research environment	Researcher's own equipment
+
+The investigation was intentionally limited to the purchased device and associated firmware.
+
+No vendor production system was accessed during the proof-of-concept work. No third-party account was compromised. No customer device was targeted.
+
+The purpose was to establish what the device itself contained, what security mechanisms it relied upon, what privileges those mechanisms exposed, and whether the architecture was unique to the retail product or representative of a larger reference design.
