@@ -1,0 +1,597 @@
+The Machine in the Middle
+Firmware Security, Trust Boundaries, and Supply-Chain Architecture in an Aftermarket Android Automotive Accessory
+
+Jay Puckett (Reckoner)
+Principal Security Researcher
+Obsidian Watch Group
+
+Research period: May–September 2026
+Publication version: 1.0
+
+Executive Summary
+
+This report documents a forensic security examination of a commercially available aftermarket automotive accessory sold as a wireless Android Auto and Apple CarPlay adapter.
+
+The device was purchased at retail with the researcher's own funds and examined using independently controlled hardware and instrumentation. The examination did not require unauthorized access to a vendor network, production server, customer account, or third-party computer system.
+
+The investigation began with a straightforward question: what security boundary exists between the owner, the vehicle, the smartphone, and the software running inside an accessory that sits directly between them?
+
+The resulting evidence indicates that, on the examined device, that boundary is substantially weaker than a consumer would reasonably expect.
+
+The device is not merely a passive adapter. It terminates communications from a smartphone and presents itself to the vehicle's head unit as an intermediary. In doing so, it occupies a privileged position in the flow of navigation information, audio, notifications, contacts, calls, and other projected information. Its Bluetooth functions additionally provide access to phone data through the Message Access Profile.
+
+The firmware examination identified multiple independent mechanisms affecting the device's security posture, including:
+
+Qualcomm reference-platform firmware and incomplete OEM identity provisioning.
+A platform signing configuration involving published Android Open Source Project test keys.
+An OTA verification key corresponding to a published AOSP test key.
+A production Android Automotive/Android Auto-related credential and corresponding private key stored locally on the device.
+A trust anchor retrieved over cleartext HTTP and authenticated through an application-level MD5 comparison.
+A writable trust-anchor location outside the Verified Boot protected area.
+Multiple factory installation and debugging mechanisms.
+Hardcoded factory access codes embedded in shipped software.
+A mechanism for enabling wireless ADB.
+A mechanism for installing APKs through the factory interface.
+A persistent vendor keepalive mechanism capable of restarting designated services.
+Applications with access to location, microphone, messaging, cellular, and vehicle-related functionality.
+Evidence that the firmware is derived from a broader reference design rather than being unique to the retail brand printed on the box.
+Evidence of substantially shared architecture across multiple firmware samples and manufacturers.
+
+The investigation also identified a significant distinction between individual vulnerabilities and architectural insecurity.
+
+Several findings do not depend upon discovering an exploitable programming error. They arise because the vendor deliberately configured security controls in a manner that permits privileged access, installation, debugging, persistence, or credential management through mechanisms shipped as part of the product.
+
+That distinction is central to this research.
+
+The report therefore does not characterize the device simply as "vulnerable." It documents a reference architecture in which multiple security boundaries can be bypassed or rendered ineffective through supported or factory mechanisms, while the consumer has comparatively little ability to control or revoke those capabilities.
+
+The findings were preserved through forensic acquisition, cryptographic hashing, source comparison, static analysis, compiled-policy analysis, and repeated examination. Where an apparent vulnerability was investigated but could not be demonstrated under the shipped configuration, it is explicitly recorded as an observation rather than promoted to a vulnerability.
+
+That distinction is intentional.
+
+1. Scope of the Investigation
+
+The subject of this investigation was an aftermarket automotive Android accessory purchased through normal retail channels.
+
+The device examined was:
+
+Property	Observed value
+Device class	Wireless Android Auto / Apple CarPlay adapter
+SoC	Qualcomm SDM662
+Storage	Samsung UFS
+Operating system	Android 13 system / Android 11 vendor
+Reported security patch	2023-06-05
+Build date	2025-09-28
+Acquisition	Retail purchase
+Firmware acquisition	Qualcomm EDL
+Research environment	Researcher's own equipment
+
+The investigation was intentionally limited to the purchased device and associated firmware.
+
+No vendor production system was accessed during the proof-of-concept work. No third-party account was compromised. No customer device was targeted.
+
+The purpose was to establish what the device itself contained, what security mechanisms it relied upon, what privileges those mechanisms exposed, and whether the architecture was unique to the retail product or representative of a larger reference design.
+
+2. Why the Device's Position Matters
+
+The security significance of the device begins with its function.
+
+A conventional cable or passive adapter primarily transports signals between two endpoints.
+
+The examined product does something different.
+
+It establishes communication with the smartphone and separately communicates with the vehicle's factory head unit. It therefore occupies the middle of the communication relationship.
+
+The architecture can be represented conceptually as:
+
+Smartphone → aftermarket accessory → vehicle head unit
+
+The accessory therefore becomes a trusted intermediary.
+
+During normal operation, the device can participate in the handling of information including:
+
+navigation;
+audio;
+notifications;
+contacts;
+call information;
+messages;
+Bluetooth data;
+device identity;
+location information;
+and, depending upon configuration, vehicle-related data.
+
+The investigation did not treat that architectural position itself as a vulnerability.
+
+It is the product's intended function.
+
+The security question is instead:
+
+What prevents the intermediary from becoming an uncontrolled privileged endpoint?
+
+The firmware examination found multiple mechanisms that weaken that boundary.
+
+3. Forensic Acquisition
+
+Firmware was acquired using Qualcomm Emergency Download Mode rather than by compromising the running operating system.
+
+The device enumerated as Qualcomm EDL hardware and exposed the Sahara/Firehose acquisition interface.
+
+The acquisition process disclosed:
+
+Qualcomm SDM662 hardware;
+Samsung UFS storage;
+a generic Qualcomm platform identity;
+a publicly identifiable Firehose program;
+and write primitives including program, patch, erase, firmwarewrite, and fixgpt.
+
+The investigation used the interface for acquisition only.
+
+The presence of write primitives is nevertheless important because it establishes that the same physical-access mechanism capable of reading the firmware also exposes mechanisms capable of modifying storage.
+
+The complete acquisition was performed through multiple sessions because the Firehose connection did not remain stable for a single uninterrupted dump.
+
+Approximately 31 GB of firmware and partition data was acquired across 12 EDL sessions.
+
+The resulting material included approximately 115 partition images, followed by additional extraction and analysis.
+
+Cryptographic hashes were generated for the evidence material and retained as part of the case record.
+
+4. The Device's Claimed Identity
+
+One of the first findings was that the device does not consistently present the same identity to every observer.
+
+In its default USB configuration, it presents identifiers corresponding to a Google Pixel:
+
+idVendor       0x18d1
+iManufacturer  "Google"
+iProduct       "Pixel"
+
+The underlying hardware, however, is a Qualcomm SDM662-based automotive module.
+
+When the relevant factory configuration is changed, the device instead presents a Qualcomm identity corresponding to the underlying platform.
+
+This matters because operating systems, endpoint-security products, USB-control systems, and other security tools frequently make decisions based upon device identity.
+
+A device that identifies itself as a Google Pixel is treated differently from an unidentified automotive IoT device.
+
+The firmware therefore contains a mechanism by which the same physical hardware can present materially different identities.
+
+The investigation also identified multiple brand profiles within the same firmware.
+
+The retail brand was therefore not sufficient to identify the underlying software platform.
+
+5. Signing and Trust
+
+The strongest findings concern the mechanisms by which the device determines what software it trusts.
+
+5.1 Published Android signing keys
+
+The examination surveyed 354 application packages.
+
+A substantial portion of those packages carried signing certificates whose fingerprints corresponded to published Android Open Source Project test keys.
+
+The matching process was performed against upstream key material rather than merely comparing certificate subject names.
+
+This distinction is important.
+
+A certificate subject such as an AOSP-related distinguished name does not establish that the corresponding key is the published key.
+
+The investigation therefore treated the cryptographic fingerprint as the relevant evidence.
+
+The resulting analysis identified:
+
+276 packages directly matching one of the five published AOSP keys;
+an additional 18 packages carrying the same AOSP distinguished-name identity but different key material;
+294 packages bearing that broader identity.
+
+The report records both numbers because they answer different questions.
+
+The first establishes exact cryptographic matches.
+
+The second identifies packages carrying the same signing identity without asserting that they possess the published private key.
+
+Among the packages affected were privileged components including:
+
+PackageInstaller;
+Settings;
+SystemUI;
+KeyChain.
+
+This is significant because Android signing relationships can affect whether applications are permitted to participate in privileged platform functions.
+
+The finding is not that Android itself is defective.
+
+The finding is that the vendor shipped a production device using a signing configuration that materially weakens the cryptographic distinction between trusted platform software and software signed with publicly available test material.
+
+6. OTA Verification
+
+The same general problem extends beyond application packages.
+
+The firmware's update-verification mechanism was examined and found to rely upon another published AOSP key.
+
+This matters because software-update security depends upon a cryptographic distinction:
+
+authorized software must be distinguishable from unauthorized software.
+
+If the private component of the verification key is publicly available, that distinction no longer provides the protection normally expected from a production signing hierarchy.
+
+The investigation therefore treats the update-signing configuration as part of the same architectural problem rather than as an isolated certificate finding.
+
+7. Android Automotive Credential Exposure
+
+The investigation identified a production credential associated with Google's automotive ecosystem.
+
+The credential and corresponding private-key material were found stored locally on the device.
+
+The analysis established the certificate chain and matched the corresponding key material.
+
+A second credential was also identified.
+
+The evidence further showed that the device could write the operational credential into a local cache partition.
+
+The significance is not simply that a certificate exists.
+
+The significance is the combination of:
+
+a credential associated with an automotive trust relationship;
+corresponding private-key material present locally;
+a credential lifecycle that can be observed from the device;
+and a local trust architecture that is independently modifiable.
+
+The published report deliberately distinguishes certificate-chain evidence from stronger claims about issuance or authorization where those claims cannot be independently established from the artifact itself.
+
+That distinction is important.
+
+8. The Trust Anchor
+
+The investigation identified another unusual trust mechanism.
+
+A root certificate used by an application was retrieved periodically over ordinary HTTP from an external host.
+
+The application subsequently authenticated the retrieved material using an MD5 digest derived from a constant compiled into the application.
+
+At the same time, the trust material was stored in a location outside the protection normally provided by Android Verified Boot and was writable by local applications.
+
+The architecture therefore contains multiple independent weaknesses:
+
+transport integrity → application-level integrity check → filesystem integrity → boot integrity
+
+rather than one cryptographically protected chain.
+
+An attacker who can alter the locally stored trust material is therefore operating against a trust boundary that does not depend solely upon the Android verified boot chain.
+
+The investigation did not need to demonstrate exploitation of every stage to establish that the trust architecture itself is weaker than a conventional hardware-backed trust chain.
+
+9. Factory Controls and Hardcoded Access
+
+The factory configuration application contained a table of hardcoded access codes.
+
+The published report withholds the actual numeric values because the affected devices remain deployed.
+
+The existence and function of the codes are documented.
+
+The analysis recovered 26 distinct factory access values across 25 constants, including mechanisms associated with:
+
+factory configuration;
+wireless ADB;
+PC/ADB mode;
+developer settings;
+serial debugging;
+OTA verification bypass;
+APK installation;
+activation bypass;
+logging;
+cellular control;
+IMEI modification;
+factory cleanup;
+and other diagnostic functions.
+
+This is significant because these are not hypothetical undocumented interfaces.
+
+They are shipped capabilities.
+
+A particularly important combination is:
+
+factory access → APK installation → weak platform signing boundary → persistent service capability.
+
+That sequence does not require a software exploit.
+
+It represents a supported or factory mechanism that can move the device from ordinary operation toward privileged software installation and persistence.
+
+10. Persistence
+
+The investigation identified a vendor keepalive mechanism implemented as a persistent system service.
+
+The relevant service is configured to restart designated vendor services on a recurring basis.
+
+This matters because persistence is normally one of the principal challenges faced by an attacker after obtaining code execution.
+
+On the examined platform, persistence is already implemented as a vendor feature.
+
+The security consequence depends upon what software can reach the mechanism.
+
+When considered together with the factory installation mechanisms and privileged signing configuration, the keepalive service becomes part of a broader persistence architecture.
+
+11. Collection and Privileged Capabilities
+
+The firmware contains applications and services capable of interacting with several categories of sensitive information.
+
+The investigation identified capabilities relating to:
+
+microphone access;
+GPS/location collection;
+Bluetooth Message Access Profile data;
+contacts;
+SMS/message information;
+cellular/eSIM functionality;
+vehicle-related data;
+diagnostic information.
+
+The report does not claim that every capability is continuously exercised merely because the relevant permission or code exists.
+
+Where runtime evidence exists, it is distinguished from static capability.
+
+That distinction is particularly important in security research.
+
+The finding is therefore better stated as:
+
+The firmware contains privileged components with the technical capability to access multiple sensitive information classes, while the consumer-facing interface provides limited or no corresponding mechanism for the owner to independently audit or revoke those capabilities.
+
+12. Wireless ADB
+
+The factory configuration contains mechanisms that enable ADB over TCP.
+
+The documented configuration sets the ADB TCP port to 5555 and restarts the ADB daemon.
+
+This is significant because the device automatically participates in saved wireless networks.
+
+The result is a potential transition from:
+
+physical factory access
+
+to:
+
+network-reachable debugging interface.
+
+The actual exploitation conditions depend upon network configuration, authorization state, and the device's surrounding environment.
+
+The report therefore does not characterize every installation as remotely exploitable.
+
+Instead, it establishes the existence of the mechanism and its relationship to the broader factory-access architecture.
+
+13. Hardware Identity and Subscriber Identity
+
+The factory interface also contains a mechanism for writing the device IMEI.
+
+Separately, the firmware contains privileged cellular/eSIM functionality.
+
+These capabilities demonstrate that identities associated with the hardware and cellular subsystem are not necessarily immutable from the perspective of the software environment.
+
+That does not by itself establish fraudulent use of the mechanisms.
+
+It establishes that the platform contains administrative capabilities normally expected to be restricted to manufacturing or controlled service environments.
+
+The security significance increases because the same device also maintains location, connectivity, and automotive functionality.
+
+14. The Reference-Design Finding
+
+The investigation's broader conclusion does not depend upon this single retail unit.
+
+Multiple firmware samples from different products were examined.
+
+The same or materially similar architectural mechanisms were identified across six firmware samples spanning five OEMs.
+
+Two samples were in-dash head units rather than adapters and used different underlying hardware/update components.
+
+The investigation also found multiple brand profiles within the firmware itself.
+
+This evidence supports a distinction between:
+
+a vulnerability in one retail product
+
+and
+
+a security weakness inherited from a common reference design.
+
+The latter is the more significant research finding.
+
+If multiple manufacturers receive firmware or architectural components from a common upstream design, correcting a single retail brand does not necessarily correct the underlying problem.
+
+The architecture can propagate.
+
+15. What the Investigation Did Not Establish
+
+A credible forensic report must document its negative findings as carefully as its positive ones.
+
+The investigation therefore does not claim:
+
+that every identified service was continuously collecting data;
+that every certificate was actively used at the time of examination;
+that every factory capability is remotely accessible;
+that every device using the reference architecture is configured identically;
+that the manufacturer intentionally designed the platform for malicious use;
+that a particular country or organization directed the observed behavior;
+or that every apparent privilege boundary constitutes an independently exploitable vulnerability.
+
+One potentially serious privilege path was specifically investigated and not promoted to an exploit finding because the shipped SELinux policy prevented the demonstrated action.
+
+That result remains in the evidence record.
+
+This is an important methodological point:
+
+The investigation records failed exploitation attempts rather than converting them into successful findings.
+
+16. Evidence Integrity and Methodology
+
+The investigation used multiple independent forms of validation.
+
+These included:
+
+raw firmware acquisition;
+partition-level imaging;
+SHA-256 evidence hashing;
+APK extraction;
+certificate fingerprint comparison;
+comparison against upstream AOSP source material;
+static code analysis;
+manifest and permission analysis;
+compiled SELinux policy analysis;
+independent sesearch verification;
+filesystem inspection;
+runtime extraction;
+credential-chain analysis;
+timeline reconstruction;
+and cross-firmware comparison.
+
+Where possible, a finding was established using more than one artifact.
+
+For example, signing-key claims were not based solely upon certificate names. They were established through cryptographic fingerprints and comparison with upstream key material.
+
+Likewise, SELinux conclusions were not based solely upon text searches of policy files. The relevant policy relationships were evaluated against the compiled policy.
+
+This approach was adopted specifically to reduce false positives.
+
+17. Disclosure
+
+The investigation was not conducted solely for publication.
+
+Material was disclosed through multiple channels during the research period.
+
+The documented timeline includes:
+
+19 May 2026 — firmware acquisition completed.
+
+19 May 2026 — Amazon Product Safety notified.
+
+21 May 2026 — evidence package provided to the Tennessee Bureau of Investigation.
+
+14 June 2026 — Google Vulnerability Reward Program submission.
+
+15 June 2026 — proof of concept developed following Google's request.
+
+16 June 2026 — additional APK analysis and supporting material submitted.
+
+17 June 2026 — additional vendor security teams notified.
+
+31 July 2026 — re-examination completed, including additional credential, persistence, interface, and IOC analysis.
+
+5 August 2026 — identified operational certificate expired.
+
+1 September 2026 — Google issue closed and publication prepared.
+
+The investigation deliberately withheld reproduction procedures for capabilities that could directly affect devices currently deployed in vehicles.
+
+The omission is therefore a safety decision, not a lack of reproducibility.
+
+The underlying evidence and reproduction material are retained in the case record.
+
+18. Why This Research Matters
+
+The most important conclusion is not that one inexpensive automotive accessory contains insecure software.
+
+Consumer electronics routinely contain individual security defects.
+
+The more significant observation is architectural.
+
+The examined device sits between a consumer's phone and the vehicle's head unit while simultaneously possessing:
+
+privileged Android capabilities;
+automotive credentials;
+cellular functionality;
+location capabilities;
+messaging access;
+factory administration;
+software-installation mechanisms;
+persistence mechanisms;
+and multiple paths through which software can be introduced or modified.
+
+Those capabilities exist simultaneously.
+
+The device therefore becomes a security boundary in its own right.
+
+If that boundary is weak, compromising the accessory can have consequences beyond the accessory itself.
+
+This is why the reference-design evidence matters.
+
+A flaw replicated across products is not adequately addressed by recalling or patching one brand.
+
+The relevant question becomes:
+
+How many products inherit the same architecture, and which parts of the upstream design must change before the security boundary is restored?
+
+That question cannot be answered solely by examining the retail label.
+
+It requires examining the firmware lineage, signing infrastructure, factory tooling, update architecture, credentials, and shared software components.
+
+That is the purpose of this investigation.
+
+19. Conclusion
+
+The evidence collected during this investigation supports a clear technical conclusion:
+
+The examined automotive accessory does not provide a conventional, coherent trust boundary between its hardware, its firmware, its update system, its privileged applications, and the consumer operating it.
+
+The weakness is not represented by one isolated bug.
+
+It is distributed across the architecture.
+
+Published signing material weakens software identity.
+
+Factory credentials expose privileged administrative functions.
+
+Wireless debugging can be enabled through a factory mechanism.
+
+Software installation can be enabled through the same administrative layer.
+
+Persistence is implemented by the vendor.
+
+Sensitive information is accessible to privileged applications.
+
+Automotive and cellular credentials exist within the device.
+
+Trust material can be retrieved and locally modified outside the strongest boot-integrity boundary.
+
+And similar mechanisms appear across multiple firmware samples and product identities.
+
+Taken individually, some of these findings might be dismissed as manufacturing conveniences, development leftovers, or isolated configuration errors.
+
+Taken together, they describe something different:
+
+a production consumer device whose security model remains substantially organized around manufacturer and factory control rather than owner-controlled trust.
+
+That distinction is the central finding of this work.
+
+The purpose of publishing the research is not to assign motive to the companies or engineers who produced these systems.
+
+It is to make the architecture visible.
+
+A consumer should not have to assume that an automotive intermediary is trustworthy simply because it is sold through a mainstream retailer, carries a familiar brand, or presents itself to a host computer as a recognized device.
+
+Trust should be established by cryptographic identity, protected update mechanisms, constrained privileges, auditable collection, revocable access, and clearly defined ownership boundaries.
+
+The examined device demonstrates what happens when those boundaries are instead distributed across factory credentials, shared reference firmware, privileged applications, reusable signing material, and persistent vendor mechanisms.
+
+The machine in the middle is not inherently the problem.
+
+The problem is allowing the machine in the middle to become the authority over every side of the relationship.
+
+Researcher's Statement
+
+This investigation was conducted independently.
+
+The device was purchased for research. The equipment used for acquisition and analysis was independently controlled. No vendor production environment was accessed as part of the research.
+
+The research record deliberately distinguishes demonstrated facts from inference, runtime observations from static capabilities, and confirmed vulnerabilities from security-relevant observations that could not be reproduced safely.
+
+Where the evidence does not establish an allegation, the report does not make one.
+
+Where an apparent vulnerability failed under the actual shipped security policy, the result is recorded as a failure rather than promoted to a finding.
+
+The purpose of the work is therefore not to establish that a particular organization is malicious.
+
+It is to establish, as precisely as possible, what the device is capable of, what trust relationships it actually implements, and where those relationships fail to provide the protection a consumer would reasonably expect.
+
+Jay Puckett (Reckoner)
+Principal Security Researcher
+Obsidian Watch Group
